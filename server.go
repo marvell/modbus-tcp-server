@@ -3,6 +3,7 @@ package modbus
 import (
 	"encoding/binary"
 	"errors"
+	"io"
 	"log"
 	"net"
 )
@@ -55,11 +56,16 @@ func (s *Server) ListenOn(addr string) error {
 				log.Printf("req: %#v", req)
 			}
 			if err != nil {
-				log.Printf("error while reading request from %s: %s", c.RemoteAddr(), err)
+				if err != io.EOF {
+					log.Printf("error while reading request from %s: %s", c.RemoteAddr(), err)
+				}
+
 				return
 			}
 
-			s.pre(req)
+			if s.pre != nil {
+				s.pre(req)
+			}
 
 			res, err := s.handle(req)
 			if Debug {
